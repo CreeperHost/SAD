@@ -70,6 +70,7 @@ public class ServerAutomaticDiscovery
                                     newList.add(serverData, false);
                                 }
                             });
+                            hasUpdated = false;
                             screen.serverSelectionList.updateOnlineServers(newList);
                         }
                     }
@@ -181,7 +182,11 @@ public class ServerAutomaticDiscovery
                             ServerData mojangServerData = new ServerData(server.name, ipStr, ServerData.Type.REALM);//TODO: Select appropriate thing here
                             replacementDiscovered.put(ipStr, mojangServerData);
                         }
-                        hasUpdated = (discoveredServers.size() != replacementDiscovered.size());
+                        if(discoveredServers.size() != replacementDiscovered.size())
+                        {
+                            hasUpdated = true;
+                        }
+//                        hasUpdated = (discoveredServers.size() != replacementDiscovered.size());
                         discoveredServers = replacementDiscovered;
                         Thread.sleep(15000);
                     } catch (IOException e) {
