@@ -111,7 +111,7 @@ public class ServerAutomaticDiscovery
     private static List<Server> doServerEnquiry(UUID uuid) throws IOException {
         Enquiry payload = new Enquiry();
         payload.id = uuid.toString();
-        URL url = new URL("https://staging.api.creeper.host/minetogether/sad");
+        URL url = new URL("https://api.creeper.host/minetogether/sad");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("PUT");
         connection.setDoOutput(true);
@@ -145,7 +145,7 @@ public class ServerAutomaticDiscovery
             server.getProfileCache().get(user).ifPresent(profile -> payload.targets.add(profile));
         }
         payload.serverPort = server.getPort();
-        URL url = new URL("https://staging.api.creeper.host/minetogether/sad");
+        URL url = new URL("https://api.creeper.host/minetogether/sad");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("PUT");
         connection.setDoOutput(true);
