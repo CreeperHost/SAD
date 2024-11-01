@@ -54,33 +54,37 @@ public class ServerAutomaticDiscovery
     @SubscribeEvent
     public void screenInit(ScreenEvent.Init.Post event)
     {
-        if (event.getScreen() instanceof JoinMultiplayerScreen && multiplayerScreenUpdateThread == null) {
-            multiplayerScreenUpdateThread = CompletableFuture.runAsync(() -> {
-                while (Minecraft.getInstance().isRunning()) {
-                    if (Minecraft.getInstance().screen instanceof JoinMultiplayerScreen screen) {
-                        if (hasUpdated) {
-                            List<String> keys = new ArrayList<>();
-                            ServerList newList = screen.servers;
-                            for (int i = 0; i < screen.servers.size(); i++) {
-                                ServerData server = screen.servers.get(i);
-                                keys.add(server.ip);
-                            }
-                            discoveredServers.forEach((key, serverData) -> {
-                                if (!keys.contains(key)) {
-                                    newList.add(serverData, false);
+        if (event.getScreen() instanceof JoinMultiplayerScreen) {
+            hasUpdated = true;
+            if (multiplayerScreenUpdateThread == null) {
+                multiplayerScreenUpdateThread = CompletableFuture.runAsync(() -> {
+                    while (Minecraft.getInstance().isRunning()) {
+                        if (Minecraft.getInstance().screen instanceof JoinMultiplayerScreen screen) {
+                            if (hasUpdated) {
+                                List<String> keys = new ArrayList<>();
+                                ServerList newList = new ServerList(Minecraft.getInstance());
+                                for (int i = 0; i < screen.servers.size(); i++) {
+                                    ServerData server = screen.servers.get(i);
+                                    keys.add(server.ip);
+                                    newList.add(server, false);
                                 }
-                            });
-                            hasUpdated = false;
-                            screen.serverSelectionList.updateOnlineServers(newList);
+                                discoveredServers.forEach((key, serverData) -> {
+                                    if (!keys.contains(key)) {
+                                        newList.add(serverData, false);
+                                    }
+                                });
+                                hasUpdated = false;
+                                screen.serverSelectionList.updateOnlineServers(newList);
+                            }
+                        }
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
                     }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+                });
+            }
         }
     }
 

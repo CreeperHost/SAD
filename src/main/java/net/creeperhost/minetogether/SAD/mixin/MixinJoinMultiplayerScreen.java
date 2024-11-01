@@ -15,4 +15,22 @@ public class MixinJoinMultiplayerScreen
     {
         ServerAutomaticDiscovery.hasUpdated = true;
     }
+
+    @Inject(at = @At("TAIL"), method = "addServerCallback")
+    public void addServer(CallbackInfo ci)
+    {
+        ServerAutomaticDiscovery.hasUpdated = true;
+    }
+
+    @Inject(at = @At("TAIL"), method = "editServerCallback")
+    public void editServer(CallbackInfo ci)
+    {
+        ServerAutomaticDiscovery.hasUpdated = true;
+    }
+
+    @Inject(at = @At("TAIL"), method = "deleteCallback")
+    public void deleteServer(CallbackInfo ci)
+    {
+        ServerAutomaticDiscovery.hasUpdated = true;
+    }
 }
