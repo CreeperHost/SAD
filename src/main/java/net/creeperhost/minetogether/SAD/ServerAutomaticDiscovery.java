@@ -82,24 +82,25 @@ public class ServerAutomaticDiscovery
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event)
     {
-        //TODO: Ensure dedicated server only, not integrated
-        CompletableFuture.runAsync(() -> {
-            LOGGER.info("Beginning MineTogether SAD broadcasting");
-            while (event.getServer().isRunning()) {
-                try {
-                    doServerAdvertisment(event.getServer());
-                    Thread.sleep(120000);
-                } catch (InterruptedException e) {
+        if(event.getServer() != null && event.getServer().isDedicatedServer()) {
+            CompletableFuture.runAsync(() -> {
+                LOGGER.info("Beginning MineTogether SAD broadcasting");
+                while (event.getServer().isRunning()) {
+                    try {
+                        doServerAdvertisment(event.getServer());
+                        Thread.sleep(120000);
+                    } catch (InterruptedException e) {
 
-                } catch (ProtocolException e) {
+                    } catch (ProtocolException e) {
 
-                } catch (MalformedURLException e) {
+                    } catch (MalformedURLException e) {
 
-                } catch (IOException e) {
+                    } catch (IOException e) {
 
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     private static List<Server> doServerEnquiry(UUID uuid) throws IOException {
         Enquiry payload = new Enquiry();
