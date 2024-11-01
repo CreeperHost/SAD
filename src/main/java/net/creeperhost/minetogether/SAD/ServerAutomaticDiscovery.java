@@ -41,7 +41,7 @@ public class ServerAutomaticDiscovery
     public static final String MODID = "mt_sad";
     private static final Logger LOGGER = LogUtils.getLogger();
     private static CompletableFuture<?> multiplayerScreenUpdateThread;
-    private static boolean hasUpdated = false;
+    public static boolean hasUpdated = false;
     public static HashMap<String, ServerData> discoveredServers = new HashMap<>();
     private static Gson gson = new Gson();
 
