@@ -177,17 +177,18 @@ public class ServerAutomaticDiscovery
                     try {
                         List<Server> servers = doServerEnquiry(id);
                         HashMap<String, ServerData> replacementDiscovered = new HashMap<>();
-                        for (Server server : servers) {
-                            String ipStr = server.ip+":"+server.port;
-                            ServerData mojangServerData = new ServerData(server.name, ipStr, ServerData.Type.REALM);//TODO: Select appropriate thing here
-                            replacementDiscovered.put(ipStr, mojangServerData);
-                        }
-                        if(discoveredServers.size() != replacementDiscovered.size())
-                        {
-                            hasUpdated = true;
-                        }
+                        if(!servers.isEmpty()) {
+                            for (Server server : servers) {
+                                String ipStr = server.ip + ":" + server.port;
+                                ServerData mojangServerData = new ServerData(server.name, ipStr, ServerData.Type.REALM);//TODO: Select appropriate thing here
+                                replacementDiscovered.put(ipStr, mojangServerData);
+                            }
+                            if (discoveredServers.size() != replacementDiscovered.size()) {
+                                hasUpdated = true;
+                            }
 //                        hasUpdated = (discoveredServers.size() != replacementDiscovered.size());
-                        discoveredServers = replacementDiscovered;
+                            discoveredServers = replacementDiscovered;
+                        }
                         Thread.sleep(15000);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
