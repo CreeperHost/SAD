@@ -43,10 +43,13 @@ public class ServerAutomaticDiscovery
     private static CompletableFuture<?> multiplayerScreenUpdateThread;
     private static boolean hasUpdated = false;
     public static HashMap<String, ServerData> discoveredServers = new HashMap<>();
+    private static Gson gson = new Gson();
+
     public ServerAutomaticDiscovery(IEventBus modEventBus, ModContainer modContainer)
     {
         NeoForge.EVENT_BUS.register(this);
     }
+
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public void screenInit(ScreenEvent.Init.Post event)
@@ -79,6 +82,7 @@ public class ServerAutomaticDiscovery
             });
         }
     }
+
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event)
     {
@@ -89,23 +93,19 @@ public class ServerAutomaticDiscovery
                     try {
                         doServerAdvertisment(event.getServer());
                         Thread.sleep(120000);
-                    } catch (InterruptedException e) {
-
-                    } catch (ProtocolException e) {
-
-                    } catch (MalformedURLException e) {
+                    } catch (InterruptedException | MalformedURLException | ProtocolException ignored) {
 
                     } catch (IOException e) {
-
+                        LOGGER.error(e.getMessage());
                     }
                 }
             });
         }
     }
+
     private static List<Server> doServerEnquiry(UUID uuid) throws IOException {
         Enquiry payload = new Enquiry();
         payload.id = uuid.toString();
-        Gson gson = new Gson();
         URL url = new URL("https://staging.api.creeper.host/minetogether/sad");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("PUT");
@@ -118,8 +118,7 @@ public class ServerAutomaticDiscovery
         writer.write(gson.toJson(payload));
         writer.flush();
         writer.close();
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(connection.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         String inputLine;
         StringBuilder response = new StringBuilder();
         while ((inputLine = in.readLine()) != null) {
@@ -141,7 +140,6 @@ public class ServerAutomaticDiscovery
             server.getProfileCache().get(user).ifPresent(profile -> payload.targets.add(profile));
         }
         payload.serverPort = server.getPort();
-        Gson gson = new Gson();
         URL url = new URL("https://staging.api.creeper.host/minetogether/sad");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("PUT");
@@ -154,8 +152,7 @@ public class ServerAutomaticDiscovery
         writer.write(gson.toJson(payload));
         writer.flush();
         writer.close();
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(connection.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         String inputLine;
         StringBuilder response = new StringBuilder();
         while ((inputLine = in.readLine()) != null) {
