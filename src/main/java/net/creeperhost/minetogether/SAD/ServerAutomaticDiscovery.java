@@ -25,10 +25,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,8 +98,8 @@ public class ServerAutomaticDiscovery
                     try {
                         doServerAdvertisment(event.getServer());
                         Thread.sleep(120000);
-                    } catch (InterruptedException | MalformedURLException | ProtocolException ignored) {
-
+                    } catch (InterruptedException | MalformedURLException | ProtocolException | URISyntaxException e) {
+                        LOGGER.error("Unable to advertise server; {}", e);
                     } catch (IOException e) {
                         LOGGER.error(e.getMessage());
                     }
@@ -108,33 +108,22 @@ public class ServerAutomaticDiscovery
         }
     }
 
-    private static List<Server> doServerEnquiry(UUID uuid) throws IOException {
+    private static List<Server> doServerEnquiry(UUID uuid) throws IOException, InterruptedException, URISyntaxException {
         Enquiry payload = new Enquiry();
         payload.id = uuid.toString();
-        URL url = new URL("https://api.creeper.host/minetogether/sad");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("PUT");
-        connection.setDoOutput(true);
-        connection.setDoInput(true);
-        connection.setConnectTimeout(60000);
-        connection.setReadTimeout(60000);
-        connection.setRequestProperty("Content-Type", "application/json");
-        OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
-        writer.write(gson.toJson(payload));
-        writer.flush();
-        writer.close();
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        connection.disconnect();
-        net.creeperhost.minetogether.SAD.responses.Enquiry enquiry = gson.fromJson(String.valueOf(response), net.creeperhost.minetogether.SAD.responses.Enquiry.class);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("https://api.creeper.host/minetogether/sad"))
+                .headers("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .build();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+        net.creeperhost.minetogether.SAD.responses.Enquiry enquiry = gson.fromJson(response.body(), net.creeperhost.minetogether.SAD.responses.Enquiry.class);
         return enquiry.servers;
     }
-    private static void doServerAdvertisment(MinecraftServer server) throws IOException {
+    private static void doServerAdvertisment(MinecraftServer server) throws IOException, URISyntaxException, InterruptedException {
         Advertise payload = new Advertise();
         String[] ops = server.getPlayerList().getOps().getUserList();
         String[] allowlist = server.getPlayerList().getWhiteList().getUserList();
@@ -145,26 +134,16 @@ public class ServerAutomaticDiscovery
             server.getProfileCache().get(user).ifPresent(profile -> payload.targets.add(profile));
         }
         payload.serverPort = server.getPort();
-        URL url = new URL("https://api.creeper.host/minetogether/sad");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("PUT");
-        connection.setDoOutput(true);
-        connection.setDoInput(true);
-        connection.setConnectTimeout(60000);
-        connection.setReadTimeout(60000);
-        connection.setRequestProperty("Content-Type", "application/json");
-        OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
-        writer.write(gson.toJson(payload));
-        writer.flush();
-        writer.close();
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        connection.disconnect();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI("https://api.creeper.host/minetogether/sad"))
+                .headers("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .build();
+        HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -194,8 +173,8 @@ public class ServerAutomaticDiscovery
                             discoveredServers = replacementDiscovered;
                         }
                         Thread.sleep(15000);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    } catch (IOException | URISyntaxException e) {
+                        LOGGER.error("Unable to fetch server list; {}", e);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
